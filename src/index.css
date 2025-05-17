@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: 124 58 237;   /* Purple */
+  --color-secondary: 56 189 248; /* Light Blue */
+  --color-accent: 249 115 22;    /* Orange */
+  --color-success: 34 197 94;    /* Green */
+  --color-warning: 234 179 8;    /* Yellow */
+  --color-error: 239 68 68;      /* Red */
+}
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-gray-100 antialiased overflow-x-hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold leading-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl mb-6;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl mb-5;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl mb-4;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-purple-600 hover:bg-purple-700 text-white;
+  }
+
+  .btn-secondary {
+    @apply bg-sky-500 hover:bg-sky-600 text-white;
+  }
+
+  .btn-accent {
+    @apply bg-orange-500 hover:bg-orange-600 text-white;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-gray-800 border border-gray-700;
+  }
+
+  .card {
+    @apply bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-xl;
+  }
+
+  .input {
+    @apply bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500;
+  }
+
+  .glow {
+    @apply relative;
+  }
+
+  .glow::after {
+    @apply content-[''] absolute top-0 left-0 -z-10 w-full h-full blur-xl opacity-30 bg-gradient-to-r from-purple-600 to-sky-500;
+  }
+}
+
+/* Animated background */
+.bg-animate {
+  background: linear-gradient(125deg, #13151a, #2a2d3a, #13151a);
+  background-size: 400% 400%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-600;
+}
