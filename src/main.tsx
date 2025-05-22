@@ -17,7 +17,8 @@ import { clusterApiUrl } from '@solana/web3.js';
 
 // Default styles for the wallet modal
 import '@solana/wallet-adapter-react-ui/styles.css';
-
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 // Set up Solana network and wallet
 const network = WalletAdapterNetwork.Devnet;
 const endpoint = clusterApiUrl(network);

@@ -164,3 +164,5 @@ export const mockAffiliateLinks: AffiliateLink[] = [
     createdAt: '2025-03-26T11:15:49Z'
   }
 ];
+
+//anchor idl parse -f src\anchor\affiliate_dapp.json -o src\anchor\idlType.ts

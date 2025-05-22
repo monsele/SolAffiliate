@@ -1,6 +1,4 @@
-import { AffiliateDapp } from "./idl";
-
-export const IDL: AffiliateDapp = {
+{
   "address": "Fqem6roKkvhpFtHuHDTXDzcGD9zpEgH7zVCi3Sf4hUFb",
   "metadata": {
     "name": "affiliate_dapp",
