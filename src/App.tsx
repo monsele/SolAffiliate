@@ -14,6 +14,7 @@ import CreateCampaignPage from './pages/CreateCampaignPage';
 import AffiliateLinksPage from './pages/AffiliateLinksPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
+import CreateNftPage from './pages/CreateNftPage'; // Import the new page
 
 function App() {
   const { connected } = useWallet();
@@ -24,6 +25,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/campaign/:id" element={<CampaignDetailsPage />} />
+        <Route path="/create-nft" element={<CreateNftPage />} /> {/* Add the new route */}
         
         {/* Protected routes */}
         {connected && (

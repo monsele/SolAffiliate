@@ -30,6 +30,7 @@ const Header: React.FC = () => {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Marketplace', path: '/marketplace' },
+    { name: 'Create NFT', path: '/create-nft' }, // Added Create NFT link
     ...(connected ? [
       { name: 'Dashboard', path: '/dashboard' },
       { name: 'My Campaigns', path: '/dashboard?tab=campaigns' },
