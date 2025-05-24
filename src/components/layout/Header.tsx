@@ -32,6 +32,7 @@ const Header: React.FC = () => {
     { name: 'Marketplace', path: '/marketplace' },
     ...(connected ? [
       { name: 'Dashboard', path: '/dashboard' },
+      { name: 'Create NFT', path: '/create-nft' },
       { name: 'My Campaigns', path: '/dashboard?tab=campaigns' },
       { name: 'My Affiliate Links', path: '/affiliate-links' },
     ] : []),
@@ -39,7 +40,7 @@ const Header: React.FC = () => {
 
   return (
     <header 
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-gray-900/95 backdrop-blur shadow-xl' : 'bg-transparent'
       }`}
     >
@@ -99,7 +100,7 @@ const Header: React.FC = () => {
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <motion.div
-          className="md:hidden bg-gray-800 border-t border-gray-700"
+          className="md:hidden bg-gray-800 border-t border-gray-700 max-h-[calc(100vh-4rem)] overflow-y-auto"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}

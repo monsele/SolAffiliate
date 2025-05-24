@@ -1,3 +1,6 @@
+// import { BN } from "@coral-xyz/anchor";
+// import { PublicKey } from "@solana/web3.js";
+
 // export async function getCampaigns() {
 //   const campaignAccounts = await program.account.nftCampaign.all();
 //   interface CampaignAccount {

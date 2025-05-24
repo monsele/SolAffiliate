@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Zap } from 'lucide-react';
 import NFTCampaignCard from '../components/campaigns/NFTCampaignCard';
 import { mockCampaigns } from '../utils/mockData';
+import { Connection } from '@solana/web3.js';
+import { AnchorWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
+import { AnchorProvider, Program, setProvider, web3 } from '@coral-xyz/anchor';
+import { getCampaigns } from '../utils/instructions';
 
 const MarketplacePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,6 +21,51 @@ const MarketplacePage: React.FC = () => {
     { id: 'metaverse', name: 'Metaverse' },
     { id: 'pfp', name: 'Profile Pictures' },
   ];
+   const rpc = import.meta.env.VITE_RPC_URL;
+   console.log(rpc);
+   
+  const connection = new Connection("https://devnet.helius-rpc.com/?api-key=8eb94de2-b378-4923-a86f-10d7590b4fdd", "confirmed");
+  const wallet = useAnchorWallet();
+  console.log(wallet ? wallet.publicKey.toString() : "No wallet connected");
+
+  const readOnlyWallet: AnchorWallet = {
+    publicKey: wallet?.publicKey || web3.Keypair.generate().publicKey, // Use connected wallet's public key or a dummy one
+    signTransaction: async <T extends web3.Transaction | web3.VersionedTransaction>(tx: T): Promise<T> => tx, // Dummy sign function with correct generic
+    signAllTransactions: async <T extends web3.Transaction | web3.VersionedTransaction>(txs: T[]): Promise<T[]> => txs, // Dummy sign function with correct generic
+  };
+ const provider = new AnchorProvider(
+    connection,
+    wallet || readOnlyWallet, // Use anchorWallet if available, otherwise the readOnlyWallet
+    AnchorProvider.defaultOptions()
+  );
+  // Set the global provider (optional, but common for Anchor)
+  setProvider(provider);
+   
+  // Fetch campaigns from the blockchain
+  // const fetchCampaigns = async () => {
+  //   const program = new Program(idl as AffiliateDapp, provider);
+  //   const campaignAccounts = await program.account.nftCampaign.all();
+  //   const campaigns = campaignAccounts.map((campaign) => ({
+  //     name: campaign.account.name,
+  //     description: campaign.account.description,
+  //     category: campaign.account.category,
+  //     image: campaign.account.image,
+  //     createdAt: campaign.account.createdAt,
+  //     updatedAt: campaign.account.updatedAt,
+  //   }));
+  //   return campaigns;
+  // };
+   useEffect(() => {
+    // Fetch campaigns from the blockchain
+    console.log("Fetching campaigns...");
+    
+        const fetchCampaigns = async () => {
+          const campaigns = await getCampaigns(provider);
+          console.log(campaigns);
+
+        };
+    fetchCampaigns();
+  }, []);
 
   const filteredCampaigns = mockCampaigns.filter(campaign => {
     // Filter by search

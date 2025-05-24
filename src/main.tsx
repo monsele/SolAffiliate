@@ -18,6 +18,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 // Default styles for the wallet modal
 import '@solana/wallet-adapter-react-ui/styles.css';
 import { Buffer } from 'buffer';
+import { Toaster } from "@/components/ui/sonner"
 window.Buffer = Buffer;
 // Set up Solana network and wallet
 const network = WalletAdapterNetwork.Devnet;
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')!).render(
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <BrowserRouter>
+          <Toaster richColors closeButton position="top-right" />
             <App />
           </BrowserRouter>
         </WalletModalProvider>

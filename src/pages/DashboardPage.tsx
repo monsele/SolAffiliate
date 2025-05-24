@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -11,41 +11,20 @@ import {
   TrendingUp,
   ChevronRight,
   Link as LinkIcon,
+  Plus,
 } from 'lucide-react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { mockCampaigns, mockAffiliateLinks } from '../utils/mockData';
-// Import getCampaigns but don't call it directly inside useEffect
-import { Program, AnchorProvider, setProvider,web3, BN } from "@coral-xyz/anchor";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
-import type {AffiliateDapp} from "../anchor/idl";
-import idl from "../anchor/affiliate_dapp.json"
-import { Connection, PublicKey } from "@solana/web3.js";
-import { log } from 'console';
+
 const DashboardPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
- const { publicKey } = useWallet();
-  const [campaigns, setCampaigns] = useState([] as any[]);
+  const { publicKey } = useWallet();
+  
   // Get tab from URL or default to 'overview'
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'overview');
-
-const customRpcUrl = "https://devnet.helius-rpc.com/?api-key=8eb94de2-b378-4923-a86f-10d7590b4fdd";
-const connection = new Connection(customRpcUrl, "confirmed");
-const wallet = useAnchorWallet();
-console.log(wallet ? wallet.publicKey.toString() : "No wallet connected");
-
-let provider: AnchorProvider | undefined;
-if (wallet) {
-  provider = new AnchorProvider(connection, wallet, {});
-  setProvider(provider);
-}
- const program = new Program(idl as AffiliateDapp, {
-  connection,
-});
-
-const programId = new web3.PublicKey(idl.address);
 
   const changeTab = (tab: string) => {
     setActiveTab(tab);
@@ -66,47 +45,6 @@ const programId = new web3.PublicKey(idl.address);
     { id: 3, label: 'Affiliate Links', value: 12, icon: <LinkIcon size={20} className="text-sky-400" />, change: '+5', period: 'from last month' },
     { id: 4, label: 'Conversion Rate', value: '8.2%', icon: <TrendingUp size={20} className="text-orange-400" />, change: '+1.4%', period: 'from last month' },
   ];
-  
- async function getCampaigns() {
-  if (!provider) {
-    console.error("Provider is not set");
-    return;
-  }
-  console.log("Fetching campaigns...");
-  
-  const campaignAccounts = await program.account.nftCampaign.all();
-  interface CampaignAccount {
-    publicKey: PublicKey;
-    account: {
-      name: string;
-      mintPrice: BN;
-      commissionPercentage: BN;
-      campaignDetails: string;
-      nftMint: PublicKey;
-      // Add other fields if needed
-    };
-  }
-
-  interface Campaign {
-    name: string;
-    mintPrice: string;
-    commissionPercentage: string;
-    campaignDetails: string;
-    nftMint: string;
-  }
-
-  const campaigns: Campaign[] = (campaignAccounts as CampaignAccount[]).map((campaign) => ({
-    name: campaign.account.name,
-    mintPrice: campaign.account.mintPrice.toString(),
-    commissionPercentage: campaign.account.commissionPercentage.toString(),
-    campaignDetails: campaign.account.campaignDetails,
-    nftMint: campaign.account.nftMint.toString(),
-  }));
-  log("Fetched campaigns:", campaignAccounts);
-  return campaigns;
-}
-
- 
 
   return (
     <div className="space-y-8">
@@ -121,6 +59,24 @@ const programId = new web3.PublicKey(idl.address);
             'Connect your wallet to access the dashboard'
           )}
         </p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-4">
+        <button 
+          onClick={() => navigate('/create-nft')}
+          className="btn btn-primary flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Create NFT
+        </button>
+        <button 
+          onClick={() => navigate('/create-campaign')}
+          className="btn btn-secondary flex items-center gap-2"
+        >
+          <Megaphone size={18} />
+          Create Campaign
+        </button>
       </div>
 
       {/* Tabs */}
@@ -179,7 +135,7 @@ const programId = new web3.PublicKey(idl.address);
             </div>
 
             {/* Recent Activity */}
-            <div className="card" onClick={() => getCampaigns()}>
+            <div className="card">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">Recent Activity</h2>
                 <button className="text-sm text-purple-400 hover:text-purple-300 flex items-center">
