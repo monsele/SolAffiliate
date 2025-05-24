@@ -14,7 +14,8 @@ import CreateCampaignPage from './pages/CreateCampaignPage';
 import AffiliateLinksPage from './pages/AffiliateLinksPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
-import CreateNFTPage from './pages/CreateNftPage';
+import CreateCampChatGpt from './pages/CreateCampChatGpt';
+import CreateNFTPage from './pages/CreateNFTPage';
 
 function App() {
   const { connected } = useWallet();
@@ -34,7 +35,7 @@ function App() {
             <Route path="/affiliate-links" element={<AffiliateLinksPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/create-nft" element={<CreateNFTPage />} />
-
+            <Route path="/create-campgpt" element={<CreateCampChatGpt />} />
           </>
         )}
         

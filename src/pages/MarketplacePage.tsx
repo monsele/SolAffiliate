@@ -62,7 +62,6 @@ const MarketplacePage: React.FC = () => {
         const fetchCampaigns = async () => {
           const campaigns = await getCampaigns(provider);
           console.log(campaigns);
-
         };
     fetchCampaigns();
   }, []);
