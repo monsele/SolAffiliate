@@ -21,10 +21,9 @@ const MarketplacePage: React.FC = () => {
     { id: 'metaverse', name: 'Metaverse' },
     { id: 'pfp', name: 'Profile Pictures' },
   ];
-   const rpc = import.meta.env.VITE_RPC_URL;
-   console.log(rpc);
-   
-  const connection = new Connection("https://devnet.helius-rpc.com/?api-key=8eb94de2-b378-4923-a86f-10d7590b4fdd", "confirmed");
+  
+  const rpc = import.meta.env.VITE_RPC_URL;
+  const connection = new Connection(rpc, "confirmed");
   const wallet = useAnchorWallet();
   console.log(wallet ? wallet.publicKey.toString() : "No wallet connected");
 
@@ -40,21 +39,7 @@ const MarketplacePage: React.FC = () => {
   );
   // Set the global provider (optional, but common for Anchor)
   setProvider(provider);
-   
-  // Fetch campaigns from the blockchain
-  // const fetchCampaigns = async () => {
-  //   const program = new Program(idl as AffiliateDapp, provider);
-  //   const campaignAccounts = await program.account.nftCampaign.all();
-  //   const campaigns = campaignAccounts.map((campaign) => ({
-  //     name: campaign.account.name,
-  //     description: campaign.account.description,
-  //     category: campaign.account.category,
-  //     image: campaign.account.image,
-  //     createdAt: campaign.account.createdAt,
-  //     updatedAt: campaign.account.updatedAt,
-  //   }));
-  //   return campaigns;
-  // };
+
    useEffect(() => {
     // Fetch campaigns from the blockchain
     console.log("Fetching campaigns...");

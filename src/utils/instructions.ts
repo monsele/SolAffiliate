@@ -1,10 +1,11 @@
-import { Program, AnchorProvider, setProvider,web3, BN } from "@coral-xyz/anchor";
-import { useAnchorWallet } from "@solana/wallet-adapter-react";
-import type {AffiliateDapp} from "../anchor/idl";
+import { Program, AnchorProvider, setProvider, web3, BN } from "@coral-xyz/anchor";
+import type { AffiliateDapp } from "../anchor/idl";
 import idl from "../anchor/affiliate_dapp.json"
-import { Connection, PublicKey } from "@solana/web3.js";
-
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, getAccount, createAssociatedTokenAccountInstruction, getMint, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { CreateTokenAccountResponse } from "@/types/response";
+//import { token } from "@metaplex-foundation/js";
 
 // const customRpcUrl = "https://devnet.helius-rpc.com/?api-key=8eb94de2-b378-4923-a86f-10d7590b4fdd";
 // const connection = new Connection(customRpcUrl, "confirmed");
@@ -59,7 +60,6 @@ export async function getCampaigns(provider: AnchorProvider) {
 }
 
 
-
 /**
  * createAffiliateLink: initializes a new affiliate link PDA for an influencer and campaign.
  */
@@ -70,7 +70,7 @@ export async function createAffiliateLink(
   const program = new Program(idl as AffiliateDapp, provider);
   const programId = new web3.PublicKey(idl.address);
   const influencer = provider?.wallet.publicKey as web3.PublicKey;
-2
+  2
   const [campaignPda] = await web3.PublicKey.findProgramAddress(
     [Buffer.from("nft_campaign"), Buffer.from(campaignName)],
     programId
@@ -89,13 +89,134 @@ export async function createAffiliateLink(
     .createAffiliateLink(campaignName)
     .accounts({
       //affiliateLink: affiliateLinkPda,
-     // campaign: campaignPda,
+      // campaign: campaignPda,
       influencer,
       //systemProgram: web3.SystemProgram.programId,
     })
     .rpc();
 }
 
+async function CreateToken2022Account(provider: AnchorProvider, mint: PublicKey) {
+  try {
+    const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
+    await getAccount(provider.connection, associatedTokenAccount, 'confirmed', TOKEN_2022_PROGRAM_ID);
+    let response: CreateTokenAccountResponse = {
+      tokenAccountAddress: associatedTokenAccount,
+      success: true,
+      message: 'Company ATA already exists'
+    }
+    return response;
+  } catch (error) {
+    try {
+      console.log('Creating company Token 2022 ATA...');
+ const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
+      const createATAInstruction = createAssociatedTokenAccountInstruction(
+        provider.wallet.publicKey,
+        associatedTokenAccount,
+        provider.wallet.publicKey,
+        mint,
+        TOKEN_2022_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createATAInstruction));
+      console.log('Company ATA created successfully');
+      const response: CreateTokenAccountResponse = {
+        tokenAccountAddress: associatedTokenAccount,
+        success: true,
+        message: 'Company ATA created successfully'
+      }
+      return response;
+    } catch (error) {
+      console.log('Error creating company ATA:', error);
+       const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
+      const response: CreateTokenAccountResponse = {
+        tokenAccountAddress: associatedTokenAccount,
+        success: false,
+        message: `Error creating company ATA: ${error}`
+      }
+      return response;
+    }
+  }
+}
+
+
+
+
+async function CreateTokenAccount(provider: AnchorProvider, mint: PublicKey, owner: PublicKey) {
+  console.log(`Creating company SPL Token ATA for mint: ${mint.toString()} and owner: ${owner.toString()}`);
+  
+  try {
+     const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_PROGRAM_ID,
+  );
+    console.log(`Checking if associated token account exists: ${associatedTokenAccount.toString()}`);
+    const accRes=await getAccount(provider.connection, associatedTokenAccount, 'confirmed', TOKEN_PROGRAM_ID);
+    console.log(`Associated token account exists: ${accRes.toString()}`);
+    
+    let response: CreateTokenAccountResponse = {
+      tokenAccountAddress: associatedTokenAccount,
+      success: true,
+      message: 'Company ATA already exists'
+    }
+    return response;
+  } catch (error) {
+    try {
+    console.log('Creating company SPL Token ATA...');
+    const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_PROGRAM_ID
+  );
+      const createATAInstruction = createAssociatedTokenAccountInstruction(
+        provider.wallet.publicKey,
+        associatedTokenAccount,
+        provider.wallet.publicKey,
+        mint,
+        TOKEN_PROGRAM_ID
+      );
+      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createATAInstruction));
+      console.log('Company ATA created successfully');
+      const response: CreateTokenAccountResponse = {
+        tokenAccountAddress: associatedTokenAccount,
+        success: true,
+        message: 'Company ATA created successfully'
+      }
+      return response;
+    } catch (error) {
+      console.log('Error creating company ATA:', error);
+       const associatedTokenAccount = getAssociatedTokenAddressSync(
+    mint,
+    provider.wallet.publicKey,
+    false,
+    TOKEN_PROGRAM_ID
+  );
+      const response: CreateTokenAccountResponse = {
+        tokenAccountAddress: associatedTokenAccount,
+        success: false,
+        message: `Error creating company ATA: ${error}`
+      }
+      return response;
+    }
+  }
+}
 /**
  * createNftCampaign: initializes a new NFT campaign and escrow accounts.
  */
@@ -105,43 +226,68 @@ export async function createNftCampaign(
   mintPrice: bigint,
   commissionPercentage: number,
   campaignDetails: string,
-  nftMint: web3.PublicKey
+  nftMint: web3.PublicKey,
+  tokenProgram: string
 ): Promise<web3.TransactionSignature> {
   const company = provider.wallet.publicKey;
   const program = new Program(idl as AffiliateDapp, provider);
   const programId = new web3.PublicKey(idl.address);
-  const [campaignPda] = await web3.PublicKey.findProgramAddress(
+  const mintPriceBN = new BN(mintPrice.toString());
+  const [campaignPda] = await web3.PublicKey.findProgramAddressSync(
     [Buffer.from("nft_campaign"), Buffer.from(name)],
     programId
   );
+  let projectTokenAccount: PublicKey;
 
-  const projectTokenAccount = await getAssociatedTokenAddress(
-    nftMint,
-    company
-  );
+  //Check the mint info program Id
 
-  const [nftEscrow] = await web3.PublicKey.findProgramAddress(
+  
+
+  if (tokenProgram == "spl-token") {
+    const accountResp = await CreateTokenAccount(provider, nftMint, company);
+    if (!accountResp?.success) {
+      return Promise.reject(new Error(accountResp.message));
+    }
+    projectTokenAccount = accountResp.tokenAccountAddress;
+  } 
+  else 
+  {
+    const accountResp = await CreateToken2022Account(provider, nftMint);
+    if (!accountResp?.success) {
+      throw new Error(accountResp.message);
+    }
+    projectTokenAccount = accountResp.tokenAccountAddress;
+  }
+
+
+ 
+
+  const [nftEscrow] = await web3.PublicKey.findProgramAddressSync(
     [Buffer.from("nft_escrow"), campaignPda.toBuffer()],
     programId
   );
 
-  const escrowPdaNftTokenAccount = await getAssociatedTokenAddress(
+  const escrowPdaNftTokenAccount = await getAssociatedTokenAddressSync(
     nftMint,
-    nftEscrow
+    nftEscrow,
+    true, // allowOwnerOffCurve = true for PDA
+    tokenProgram == "spl-token" ? TOKEN_PROGRAM_ID : TOKEN_2022_PROGRAM_ID,
   );
 
+ console.log("Got here to call the instruction");
+ 
   return await program.methods
-    .createNftCampaign(name, mintPrice, commissionPercentage, campaignDetails)
+    .createNftCampaign(name, mintPriceBN, commissionPercentage, campaignDetails)
     .accounts({
       company,
-      //campaign: campaignPda,
+      campaign: campaignPda,
       nftMint,
-      //projectTokenAccount,
-      //nftEscrow,
-      //escrowPdaNftTokenAccount,
-      //tokenProgram: TOKEN_PROGRAM_ID,
-      //associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      //systemProgram: web3.SystemProgram.programId,
+      projectTokenAccount,
+      nftEscrow,
+      escrowPdaNftTokenAccount,
+      tokenProgram: tokenProgram == "spl-token" ? TOKEN_PROGRAM_ID : TOKEN_2022_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: web3.SystemProgram.programId,
     })
     .rpc();
 }
@@ -181,17 +327,17 @@ export async function processAffiliateMint(
     )
   )[0];
 
-  const buyerTokenAccount = await getAssociatedTokenAddress(
+  const buyerTokenAccount = await getAssociatedTokenAddressSync(
     nftMint,
     buyer
   );
 
-  const ownerTokenAccount = await getAssociatedTokenAddress(
+  const ownerTokenAccount = await getAssociatedTokenAddressSync(
     nftMint,
     owner
   );
 
-  const escrowPdaNftTokenAccount = await getAssociatedTokenAddress(
+  const escrowPdaNftTokenAccount = await getAssociatedTokenAddressSync(
     nftMint,
     nftEscrowPda
   );

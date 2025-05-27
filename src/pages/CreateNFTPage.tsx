@@ -12,7 +12,7 @@ import { PinataSDK } from 'pinata-web3';
 import { NFTMetadata } from '../types/nftMetaData';
 import { Metaplex, PublicKey, walletAdapterIdentity } from '@metaplex-foundation/js';
 import { toast } from 'sonner';
-import { t } from 'pinata/dist/index-CQFQEo3K';
+//import { t } from 'pinata/dist/index-CQFQEo3K';
 
 const CreateNFTPage: React.FC = () => {
   const { connection } = useConnection();

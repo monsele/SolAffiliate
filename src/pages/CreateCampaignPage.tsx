@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
+import { Metaplex, walletAdapterIdentity } from '@metaplex-foundation/js';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -10,7 +12,8 @@ import {
   Edit3,
   Trash2
 } from 'lucide-react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { toast } from 'sonner';
 
 // Mock NFT data
 const mockNFTs = [
@@ -19,13 +22,61 @@ const mockNFTs = [
   { id: 3, name: 'Mystic Creature #5', image: 'https://images.pexels.com/photos/6577903/pexels-photo-6577903.jpeg' },
   { id: 4, name: 'Digital Dream #8', image: 'https://images.pexels.com/photos/2832382/pexels-photo-2832382.jpeg' },
 ];
-
+//const [nfts, setNfts] = useState<{ id: string; name: string; image: string }[]>([]);
 const CreateCampaignPage: React.FC = () => {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, wallet } = useWallet();
+   const { connection } = useConnection();
+     const [nfts, setNfts] = useState<{ id: string; name: string; image: string }[]>([]);
+  useEffect(() => {
+  const fetchNFTs = async () => {
+    if (!publicKey) return;
+
+   // const connection = new Connection(clusterApiUrl('mainnet-beta'));
+    if (!wallet?.adapter) return;
+    const metaplex = Metaplex.make(connection).use(walletAdapterIdentity(wallet.adapter));
+    
+    try {
+      const allNFTs = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+      const metadata = await Promise.all(
+        allNFTs
+          .filter((nft) => nft.model === 'metadata' && nft.uri)
+          .slice(0, 20) // limit for performance; adjust as needed
+          .map(async (nft) => {
+            try {
+              const uri = nft.uri.startsWith('ipfs://')
+                ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                : nft.uri;
+
+              const res = await fetch(uri);
+
+              const data = await res.json();
+              console.log('Fetched NFT data:', data);
+              return {
+                id: nft.address.toBase58(),
+                name: data.name || 'Unnamed NFT',
+                image: data.image || '',
+              };
+            } catch (err) {
+              return null;
+            }
+          })
+      );
+
+      setNfts(metadata.filter((nft) => nft !== null) as any);
+      console.log('Fetched NFTs:', metadata);
+      
+    } catch (error) {
+      console.error('Failed to fetch NFTs:', error);
+    }
+  };
+
+  fetchNFTs();
+}, [publicKey]);
+
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1);
-  const [selectedNFT, setSelectedNFT] = useState<number | null>(null);
+  const [selectedNFT, setSelectedNFT] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,7 +96,7 @@ const CreateCampaignPage: React.FC = () => {
     
     // In a real application, we would send the form data to the Solana blockchain
     // For now, just navigate to the dashboard
-    alert('Campaign created successfully!');
+    toast.success('Campaign created successfully!');
     navigate('/dashboard?tab=campaigns');
   };
 
@@ -131,7 +182,7 @@ const CreateCampaignPage: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">Your NFTs</h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              {mockNFTs.map((nft) => (
+              {nfts.map((nft) => (
                 <div
                   key={nft.id}
                   onClick={() => setSelectedNFT(nft.id)}
@@ -374,13 +425,13 @@ const CreateCampaignPage: React.FC = () => {
                   {selectedNFT && (
                     <div className="rounded-lg overflow-hidden border border-gray-700">
                       <img
-                        src={mockNFTs.find(nft => nft.id === selectedNFT)?.image}
-                        alt={mockNFTs.find(nft => nft.id === selectedNFT)?.name}
+                        src={nfts.find(nft => nft.id === selectedNFT)?.image}
+                        alt={nfts.find(nft => nft.id === selectedNFT)?.name}
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-4">
                         <p className="font-medium text-lg">
-                          {mockNFTs.find(nft => nft.id === selectedNFT)?.name}
+                          {nfts.find(nft => nft.id === selectedNFT)?.name}
                         </p>
                         <p className="text-sm text-gray-400 mt-2">
                           Owned by: {publicKey?.toString().slice(0, 6)}...{publicKey?.toString().slice(-4)}

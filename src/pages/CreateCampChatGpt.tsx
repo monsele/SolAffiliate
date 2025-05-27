@@ -1,9 +1,9 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
-import { Metaplex, walletAdapterIdentity } from '@metaplex-foundation/js';
+import { Metaplex, token, walletAdapterIdentity } from '@metaplex-foundation/js';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Info,
   AlertCircle,
   CheckCircle2,
@@ -12,7 +12,11 @@ import {
   Edit3,
   Trash2
 } from 'lucide-react';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { toast } from 'sonner';
+import { AnchorProvider, setProvider } from '@coral-xyz/anchor';
+import { createNftCampaign } from '@/utils/instructions';
+
 
 // Mock NFT data
 const mockNFTs = [
@@ -21,61 +25,94 @@ const mockNFTs = [
   { id: 3, name: 'Mystic Creature #5', image: 'https://images.pexels.com/photos/6577903/pexels-photo-6577903.jpeg' },
   { id: 4, name: 'Digital Dream #8', image: 'https://images.pexels.com/photos/2832382/pexels-photo-2832382.jpeg' },
 ];
-//const [nfts, setNfts] = useState<{ id: string; name: string; image: string }[]>([]);
+
 const CreateCampChatGpt: React.FC = () => {
   const { connected, publicKey, wallet } = useWallet();
-   const { connection } = useConnection();
-     const [nfts, setNfts] = useState<{ id: string; name: string; image: string }[]>([]);
+  const { connection } = useConnection();
+
+  const anchorWallet = useAnchorWallet();
   useEffect(() => {
-  const fetchNFTs = async () => {
-    if (!publicKey) return;
-
-   // const connection = new Connection(clusterApiUrl('mainnet-beta'));
-    if (!wallet?.adapter) return;
-    const metaplex = Metaplex.make(connection).use(walletAdapterIdentity(wallet.adapter));
-    
-    try {
-      const allNFTs = await metaplex.nfts().findAllByOwner({ owner: publicKey });
-      const metadata = await Promise.all(
-        allNFTs
-          .filter((nft) => nft.model === 'metadata' && nft.uri)
-          .slice(0, 20) // limit for performance; adjust as needed
-          .map(async (nft) => {
-            try {
-              const uri = nft.uri.startsWith('ipfs://')
-                ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
-                : nft.uri;
-
-              const res = await fetch(uri);
-
-              const data = await res.json();
-              console.log('Fetched NFT data:', data);
-              return {
-                id: nft.address.toBase58(),
-                name: data.name || 'Unnamed NFT',
-                image: data.image || '',
-              };
-            } catch (err) {
-              return null;
-            }
-          })
+    if (anchorWallet) {
+      console.log(anchorWallet.publicKey.toString());
+      const provider = new AnchorProvider(
+        connection,
+        anchorWallet, // Use anchorWallet if available, otherwise the readOnlyWallet
+        AnchorProvider.defaultOptions()
       );
-
-      setNfts(metadata.filter((nft) => nft !== null) as any);
-      console.log('Fetched NFTs:', metadata);
-      
-    } catch (error) {
-      console.error('Failed to fetch NFTs:', error);
+      // Set the global provider (optional, but common for Anchor)
+      setProvider(provider);
+    } else {
+      console.log("No wallet connected");
     }
-  };
+  }, [anchorWallet, connection]);
+  const [nfts, setNfts] = useState<{ id: string; name: string; image: string; nft_mint: PublicKey, tokenProgram:string }[]>([]);
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      if (!publicKey) return;
 
-  fetchNFTs();
-}, [publicKey]);
+      // const connection = new Connection(clusterApiUrl('mainnet-beta'));
+      if (!wallet?.adapter) return;
+      const metaplex = Metaplex.make(connection).use(walletAdapterIdentity(wallet.adapter));
+
+      try {
+        const allNFTs = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+        const metadata = await Promise.all(
+          allNFTs
+            .filter((nft) => nft.model === 'metadata' && nft.uri)
+            .slice(0, 20) // limit for performance; adjust as needed
+            .map(async (nft) => {
+              try {
+                const uri = nft.uri.startsWith('ipfs://')
+                  ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                  : nft.uri;
+
+                const res = await fetch(uri);
+                const data = await res.json();
+                const mintParsedInfo = await connection.getParsedAccountInfo(nft.mintAddress);  
+                let tokenProgram = '';
+                if (
+                  mintParsedInfo.value?.data &&
+                  typeof mintParsedInfo.value.data === 'object' &&
+                  'program' in mintParsedInfo.value.data
+                ) {
+                  tokenProgram = mintParsedInfo.value.data.program;
+                }
+                console.log('mint info:', mintParsedInfo);
+                return {
+                  id: nft.address.toBase58(),
+                  name: data.name || 'Unnamed NFT',
+                  image: data.image || '',
+                  nft_mint: nft.mintAddress,
+                  tokenProgram,
+                };
+              } catch (err) {
+                toast.error(`Failed to fetch NFT metadata for ${nft.address.toBase58()}: ${err}`);
+                console.error(`Failed to fetch NFT metadata for ${nft.address.toBase58()}:`, err);
+                return null;
+              }
+            })
+        );
+
+        setNfts(metadata.filter((nft) => nft !== null) as any);
+        console.log('Fetched NFTs:', metadata);
+        // for (const nft of metadata) {
+        //   if (nft) {
+        //     console.log(`NFT mint address: ${nft.nft_mint}, Name: ${nft.name}, Image: ${nft.image}, Token Program: ${nft.tokenProgram}`); 
+        //   }
+        // }
+
+      } catch (error) {
+        console.error('Failed to fetch NFTs:', error);
+      }
+    };
+
+    fetchNFTs();
+  }, [publicKey]);
 
   const navigate = useNavigate();
-  
+
   const [step, setStep] = useState(1);
-  const [selectedNFT, setSelectedNFT] = useState<string | null>(null);
+  const [selectedNFT, setSelectedNFT] = useState<{ id: string; name: string; image: string; nft_mint: PublicKey, tokenProgram:string } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -92,10 +129,39 @@ const CreateCampChatGpt: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!anchorWallet) {
+      toast.error('Wallet not connected');
+      return;
+    }
+    if (!selectedNFT || !selectedNFT.nft_mint) {
+      toast.error('No NFT selected');
+      return;
+    }
+    const provider = new AnchorProvider(
+      connection,
+      anchorWallet,
+      AnchorProvider.defaultOptions()
+    );
+    console.log(provider);
+
+    const result =await createNftCampaign(
+      provider,
+      formData.name,
+      BigInt(Math.round(parseFloat(formData.price) * 1_000_000_000)),
+      parseFloat(formData.commissionRate),
+      formData.description,
+      selectedNFT.nft_mint,
+      selectedNFT.tokenProgram,
+    );
+
     // In a real application, we would send the form data to the Solana blockchain
     // For now, just navigate to the dashboard
-    alert('Campaign created successfully!');
+    console.log(selectedNFT);
+    console.log('Form Data:', formData);
+    console.log('Transaction Signature:', result);
+
+
+    toast.success('Campaign created successfully!');
     navigate('/dashboard?tab=campaigns');
   };
 
@@ -138,14 +204,13 @@ const CreateCampChatGpt: React.FC = () => {
           ].map((s, i) => (
             <React.Fragment key={s.num}>
               <div className="flex flex-col items-center">
-                <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    step === s.num
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step === s.num
                       ? 'bg-purple-600 text-white'
                       : step > s.num
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-700 text-gray-400'
-                  }`}
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-700 text-gray-400'
+                    }`}
                 >
                   {step > s.num ? <CheckCircle2 size={20} /> : s.num}
                 </div>
@@ -177,19 +242,18 @@ const CreateCampChatGpt: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             <h2 className="text-xl font-bold mb-4">Your NFTs</h2>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
               {nfts.map((nft) => (
                 <div
                   key={nft.id}
-                  onClick={() => setSelectedNFT(nft.id)}
-                  className={`rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                    selectedNFT === nft.id
+                  onClick={() => setSelectedNFT(nft)}
+                  className={`rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${selectedNFT?.id === nft.id
                       ? 'border-purple-500 ring-2 ring-purple-500/30'
                       : 'border-gray-700 hover:border-gray-600'
-                  }`}
+                    }`}
                 >
                   <div className="relative">
                     <img
@@ -197,7 +261,7 @@ const CreateCampChatGpt: React.FC = () => {
                       alt={nft.name}
                       className="w-full h-40 object-cover"
                     />
-                    {selectedNFT === nft.id && (
+                    {selectedNFT?.id === nft.id && (
                       <div className="absolute top-2 right-2 bg-purple-500 rounded-full p-1">
                         <CheckCircle2 size={16} />
                       </div>
@@ -209,14 +273,13 @@ const CreateCampChatGpt: React.FC = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="flex justify-end">
               <button
                 onClick={handleNext}
                 disabled={!selectedNFT}
-                className={`btn btn-primary flex items-center ${
-                  !selectedNFT ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`btn btn-primary flex items-center ${!selectedNFT ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 Continue <ChevronRight size={18} className="ml-1" />
               </button>
@@ -234,7 +297,7 @@ const CreateCampChatGpt: React.FC = () => {
         >
           <div className="card mb-6">
             <h2 className="text-xl font-bold mb-6">Campaign Details</h2>
-            
+
             <form className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -252,7 +315,7 @@ const CreateCampChatGpt: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">
                     Category
@@ -274,7 +337,7 @@ const CreateCampChatGpt: React.FC = () => {
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
                   Description
@@ -290,7 +353,7 @@ const CreateCampChatGpt: React.FC = () => {
                   required
                 ></textarea>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1">
@@ -309,7 +372,7 @@ const CreateCampChatGpt: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="commissionRate" className="block text-sm font-medium text-gray-300 mb-1">
                     Commission Rate (%)
@@ -327,7 +390,7 @@ const CreateCampChatGpt: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="endDate" className="block text-sm font-medium text-gray-300 mb-1">
                     End Date
@@ -343,7 +406,7 @@ const CreateCampChatGpt: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="flex justify-between pt-4">
                 <button
                   type="button"
@@ -375,7 +438,7 @@ const CreateCampChatGpt: React.FC = () => {
         >
           <div className="card mb-6">
             <h2 className="text-xl font-bold mb-6">Review Your Campaign</h2>
-            
+
             <div className="mb-6">
               <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 mb-6">
                 <AlertCircle size={20} className="text-yellow-400 flex-shrink-0 mt-1" />
@@ -385,7 +448,7 @@ const CreateCampChatGpt: React.FC = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Campaign Information</h3>
@@ -418,19 +481,19 @@ const CreateCampChatGpt: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Selected NFT</h3>
                   {selectedNFT && (
                     <div className="rounded-lg overflow-hidden border border-gray-700">
                       <img
-                        src={nfts.find(nft => nft.id === selectedNFT)?.image}
-                        alt={nfts.find(nft => nft.id === selectedNFT)?.name}
+                        src={nfts.find(nft => nft.id === selectedNFT.id)?.image}
+                        alt={nfts.find(nft => nft.id === selectedNFT.id)?.name}
                         className="w-full h-48 object-cover"
                       />
                       <div className="p-4">
                         <p className="font-medium text-lg">
-                          {nfts.find(nft => nft.id === selectedNFT)?.name}
+                          {nfts.find(nft => nft.id === selectedNFT.id)?.name}
                         </p>
                         <p className="text-sm text-gray-400 mt-2">
                           Owned by: {publicKey?.toString().slice(0, 6)}...{publicKey?.toString().slice(-4)}
@@ -441,7 +504,7 @@ const CreateCampChatGpt: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-between pt-4 border-t border-gray-700">
               <button
                 type="button"
