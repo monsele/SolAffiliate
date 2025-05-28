@@ -12,13 +12,14 @@ import { PinataSDK } from 'pinata-web3';
 import { NFTMetadata } from '../types/nftMetaData';
 import { Metaplex, PublicKey, walletAdapterIdentity } from '@metaplex-foundation/js';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 //import { t } from 'pinata/dist/index-CQFQEo3K';
 
 const CreateNFTPage: React.FC = () => {
   const { connection } = useConnection();
   const wallet = useWallet(); // Access the wallet context
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -164,6 +165,7 @@ const CreateNFTPage: React.FC = () => {
       toast.error(`Error creating NFT`);
     } finally {
       setIsSubmitting(false);
+      navigate('/dashboard'); // Redirect to dashboard after creation
     }
   };
 
