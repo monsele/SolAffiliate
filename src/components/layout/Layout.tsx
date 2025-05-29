@@ -21,7 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <Header />
 
-      <main className="flex-grow container mx-auto px-4 py-6 md:py-12">
+      <main className="flex-grow container mx-auto px-4 py-6 md:py-12 mt-16 md:mt-20">
         {/* Show a hint if wallet is not connected */}
         {!connected && (
           <motion.div 
