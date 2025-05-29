@@ -1,4 +1,7 @@
-export interface Campaign {
+import { BN } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+
+export interface CampaignType {
   id: string;
   name: string;
   description: string;
@@ -12,6 +15,36 @@ export interface Campaign {
   createdAt: string;
   endDate: string;
 }
+export interface Campaign {
+  name: string;
+  mintPrice: string;
+  commissionPercentage: string;
+  campaignDetails: string;
+  nftMint: string;
+  nftMetadata: {
+    uri?: string;
+    name: string;
+    description: string;
+    image: string;
+    attributes?: Array<{
+      trait_type: string;
+      value: string;
+    }>;
+  };
+}
+export interface CampaignAccount {
+    publicKey: PublicKey;
+    account: {
+      name: string;
+      mintPrice: BN;
+      commissionPercentage: BN;
+      campaignDetails: string;
+      nftMint: PublicKey;
+
+      // Add other fields if needed
+    };
+  }
+
 
 export interface AffiliateLink {
   id: string;

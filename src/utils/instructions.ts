@@ -5,6 +5,8 @@ import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, getAccount, createAssociatedTokenAccountInstruction, getMint, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { CreateTokenAccountResponse } from "@/types/response";
+import { Metaplex } from "@metaplex-foundation/js";
+import { Campaign, CampaignAccount } from "@/types/campaign";
 //import { token } from "@metaplex-foundation/js";
 
 // const customRpcUrl = "https://devnet.helius-rpc.com/?api-key=8eb94de2-b378-4923-a86f-10d7590b4fdd";
@@ -24,30 +26,9 @@ import { CreateTokenAccountResponse } from "@/types/response";
 // const programId = new web3.PublicKey(idl.address);
 
 
-
-
 export async function getCampaigns(provider: AnchorProvider) {
   const program = new Program(idl as AffiliateDapp, provider);
   const campaignAccounts = await program.account.nftCampaign.all();
-  interface CampaignAccount {
-    publicKey: PublicKey;
-    account: {
-      name: string;
-      mintPrice: BN;
-      commissionPercentage: BN;
-      campaignDetails: string;
-      nftMint: PublicKey;
-      // Add other fields if needed
-    };
-  }
-
-  interface Campaign {
-    name: string;
-    mintPrice: string;
-    commissionPercentage: string;
-    campaignDetails: string;
-    nftMint: string;
-  }
 
   const campaigns: Campaign[] = (campaignAccounts as CampaignAccount[]).map((campaign) => ({
     name: campaign.account.name,
@@ -55,9 +36,81 @@ export async function getCampaigns(provider: AnchorProvider) {
     commissionPercentage: campaign.account.commissionPercentage.toString(),
     campaignDetails: campaign.account.campaignDetails,
     nftMint: campaign.account.nftMint.toString(),
+    nftMetadata: {
+      name: "",
+      description: "",
+      image: "",
+      attributes: [],
+      uri: "",
+    },
   }));
   return campaigns;
 }
+
+
+
+
+export async function getFullCampaigns(provider: AnchorProvider) {
+  const program = new Program(idl as AffiliateDapp, provider);
+  const metaplex = new Metaplex(provider.connection);
+  const campaignAccounts = await program.account.nftCampaign.all();
+
+  const campaigns: Campaign[] = await Promise.all(
+    (campaignAccounts as CampaignAccount[]).map(async (campaign) => {
+      // Fetch NFT metadata using Metaplex
+      const nft = await metaplex
+        .nfts()
+        .findByMint({ mintAddress: campaign.account.nftMint });
+
+      const uri = nft.uri.startsWith('ipfs://')
+                  ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                  : nft.uri;
+          //nft.uri = uri; // Update the URI to use a public gateway if needed
+      
+      return {
+        name: campaign.account.name,
+        mintPrice: campaign.account.mintPrice.toString(),
+        commissionPercentage: campaign.account.commissionPercentage.toString(),
+        campaignDetails: campaign.account.campaignDetails,
+        nftMint: campaign.account.nftMint.toString(),
+        nftMetadata: {
+          uri: uri,
+          name: nft.name,
+          description: nft.json?.description || '',
+          image: nft.json?.image || '',
+          attributes: Array.isArray(nft.json?.attributes)
+            ? nft.json.attributes
+                .filter(
+                  (attr: any) =>
+                    typeof attr.trait_type === "string" &&
+                    typeof attr.value === "string"
+                )
+                .map(
+                  (attr: any) =>
+                    ({
+                      trait_type: attr.trait_type,
+                      value: attr.value,
+                    } as { trait_type: string; value: string })
+                )
+            : [],
+        },
+      };
+    })
+  );
+
+  return campaigns;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**

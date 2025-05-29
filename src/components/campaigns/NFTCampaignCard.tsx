@@ -4,10 +4,14 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { motion } from 'framer-motion';
 import { ChevronRight, Star, Clock, DollarSign } from 'lucide-react';
 import { Campaign } from '../../types/campaign';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 interface NFTCampaignCardProps {
   campaign: Campaign;
   featured?: boolean;
+}
+function lamportsToSol(lamports: number): number {
+    return lamports / LAMPORTS_PER_SOL;
 }
 
 const NFTCampaignCard: React.FC<NFTCampaignCardProps> = ({ campaign, featured = false }) => {
@@ -23,7 +27,7 @@ const NFTCampaignCard: React.FC<NFTCampaignCardProps> = ({ campaign, featured = 
       {/* Image container */}
       <div className="relative">
         <img
-          src={campaign.imageUrl}
+          src={campaign.nftMetadata.image}
           alt={campaign.name}
           className="w-full h-48 object-cover"
         />
@@ -40,27 +44,28 @@ const NFTCampaignCard: React.FC<NFTCampaignCardProps> = ({ campaign, featured = 
         <div className="mb-3 flex justify-between items-start">
           <h3 className="text-lg font-bold">{campaign.name}</h3>
           <span className="text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
-            {campaign.commissionRate}% Commission
+            {campaign.commissionPercentage}% Commission
           </span>
         </div>
         
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{campaign.description}</p>
+        <p className="text-gray-400 text-sm mb-4 line-clamp-2">{campaign.campaignDetails}</p>
         
         <div className="flex items-center justify-between text-sm text-gray-400 mb-4">
           <div className="flex items-center">
             <Clock size={16} className="mr-1" />
-            <span>{new Date(campaign.endDate).toLocaleDateString()}</span>
+            <span>{new Date().toLocaleDateString()}</span>
           </div>
           <div className="flex items-center">
             <DollarSign size={16} className="mr-1" />
-            <span>{campaign.price} SOL</span>
+            <span>{lamportsToSol(campaign.mintPrice as unknown as number)} SOL</span>
           </div>
         </div>
 
         <div className="mt-auto">
           {connected ? (
             <Link
-              to={`/campaign/${campaign.id}`}
+             // to={`/campaign/${campaign.id}`}
+            to={`/campaign/${1}`}
               className="w-full btn btn-primary flex justify-center items-center"
             >
               View Campaign <ChevronRight size={18} className="ml-1" />

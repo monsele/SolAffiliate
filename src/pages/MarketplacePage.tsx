@@ -6,13 +6,18 @@ import { mockCampaigns } from '../utils/mockData';
 import { Connection } from '@solana/web3.js';
 import { AnchorWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { AnchorProvider, Program, setProvider, web3 } from '@coral-xyz/anchor';
-import { getCampaigns } from '../utils/instructions';
+import { getCampaigns, getFullCampaigns } from '../utils/instructions';
+import { Campaign } from '@/types/campaign';
 
 const MarketplacePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  // Import or define the Campaign type above this line if not already imported
+  // import { Campaign } from '../types/Campaign'; // Example import
 
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+   
   const categories = [
     { id: 'all', name: 'All Categories' },
     { id: 'art', name: 'Art' },
@@ -43,38 +48,49 @@ const MarketplacePage: React.FC = () => {
    useEffect(() => {
     // Fetch campaigns from the blockchain
     console.log("Fetching campaigns...");
-    
         const fetchCampaigns = async () => {
-          const campaigns = await getCampaigns(provider);
-          console.log(campaigns);
+          const fullCampaigns = await getFullCampaigns(provider);
+          for (const c of fullCampaigns) {
+            let imageUrl = '';
+            let metaData = await fetch(c.nftMetadata?.uri || '');
+            let metaDataJson = await metaData.json();
+           // console.log("Metadata response:", await metaData.json());
+            
+            imageUrl =  metaDataJson.image || '';
+            c.nftMetadata.image = imageUrl;
+            c.nftMetadata.description = metaDataJson.description || '';  
+            //c.name = metaDataJson.name || 'Untitled Campaign';
+          }
+          console.log("Full Campaigns:", fullCampaigns);
+          setCampaigns(fullCampaigns);
         };
     fetchCampaigns();
   }, []);
 
-  const filteredCampaigns = mockCampaigns.filter(campaign => {
-    // Filter by search
-    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          campaign.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // const filteredCampaigns = mockCampaigns.filter(campaign => {
+  //   // Filter by search
+  //   const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //                         campaign.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Filter by category
-    const matchesCategory = selectedCategory === 'all' || campaign.category === selectedCategory;
+  //   // Filter by category
+  //   const matchesCategory = selectedCategory === 'all' || campaign.category === selectedCategory;
     
-    return matchesSearch && matchesCategory;
-  });
+  //   return matchesSearch && matchesCategory;
+  // });
 
   // Sort campaigns
-  const sortedCampaigns = [...filteredCampaigns].sort((a, b) => {
-    if (sortBy === 'newest') {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    } else if (sortBy === 'oldest') {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    } else if (sortBy === 'highest-commission') {
-      return b.commissionRate - a.commissionRate;
-    } else if (sortBy === 'lowest-price') {
-      return a.price - b.price;
-    }
-    return 0;
-  });
+  // const sortedCampaigns = [...filteredCampaigns].sort((a, b) => {
+  //   if (sortBy === 'newest') {
+  //     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  //   } else if (sortBy === 'oldest') {
+  //     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  //   } else if (sortBy === 'highest-commission') {
+  //     return b.commissionRate - a.commissionRate;
+  //   } else if (sortBy === 'lowest-price') {
+  //     return a.price - b.price;
+  //   }
+  //   return 0;
+  // });
 
   return (
     <div className="space-y-8">
@@ -138,6 +154,20 @@ const MarketplacePage: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {campaigns
+            .slice(0, 3)
+            .map((campaign, index) => (
+              <motion.div
+                //key={campaign.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <NFTCampaignCard campaign={campaign} featured />
+              </motion.div>
+            ))}
+        </div>
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedCampaigns
             .filter(campaign => campaign.featured)
             .slice(0, 3)
@@ -151,17 +181,19 @@ const MarketplacePage: React.FC = () => {
                 <NFTCampaignCard campaign={campaign} featured />
               </motion.div>
             ))}
-        </div>
+        </div> */}
+
+
       </div>
 
       {/* All campaigns */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">All Campaigns</h2>
-        {sortedCampaigns.length > 0 ? (
+        {campaigns.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedCampaigns.map((campaign, index) => (
+            {campaigns.map((campaign, index) => (
               <motion.div
-                key={campaign.id}
+                //key={campaign.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}

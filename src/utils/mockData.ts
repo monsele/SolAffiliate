@@ -1,6 +1,6 @@
-import { Campaign, AffiliateLink } from '../types/campaign';
+import { CampaignType, AffiliateLink } from '../types/campaign';
 
-export const mockCampaigns: Campaign[] = [
+export const mockCampaigns: CampaignType[] = [
   {
     id: '1',
     name: 'Cosmic Voyagers Collection',
