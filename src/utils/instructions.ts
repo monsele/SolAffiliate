@@ -26,25 +26,41 @@ import { Campaign, CampaignAccount } from "@/types/campaign";
 // const programId = new web3.PublicKey(idl.address);
 
 
-export async function getCampaigns(provider: AnchorProvider) {
+export async function getCampaign(provider: AnchorProvider, nftMint?: PublicKey): Promise<Campaign> {
   const program = new Program(idl as AffiliateDapp, provider);
+   const metaplex = new Metaplex(provider.connection);
   const campaignAccounts = await program.account.nftCampaign.all();
+  const specificCampaign = campaignAccounts.find(c => c.account.nftMint == nftMint) as CampaignAccount;
+  console.log(provider, "provider");
+  console.log(specificCampaign.account.nftMint, "scamp");
+  
+   const nft = await metaplex
+        .nfts()
+        .findByMint({ mintAddress: specificCampaign.account.nftMint });
+console.log("Got here to fetch the NFT metadata");
 
-  const campaigns: Campaign[] = (campaignAccounts as CampaignAccount[]).map((campaign) => ({
-    name: campaign.account.name,
-    mintPrice: campaign.account.mintPrice.toString(),
-    commissionPercentage: campaign.account.commissionPercentage.toString(),
-    campaignDetails: campaign.account.campaignDetails,
-    nftMint: campaign.account.nftMint.toString(),
+      const uri = nft.uri.startsWith('ipfs://')
+                  ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                  : nft.uri;
+          let metaData = await fetch(uri || '');
+          let metaDataJson = await metaData.json();         
+  const campaign: Campaign = {
+    name: specificCampaign.account.name,
+    mintPrice: specificCampaign.account.mintPrice.toString(),
+    commissionPercentage: specificCampaign.account.commissionPercentage.toString(),
+    campaignDetails: specificCampaign.account.campaignDetails,
+    nftMint: specificCampaign.account.nftMint.toString(),
+    active: specificCampaign.account.active,
+    
     nftMetadata: {
       name: "",
-      description: "",
-      image: "",
+      description: metaDataJson.description,
+      image:  metaDataJson.image || '',
       attributes: [],
-      uri: "",
+      uri: uri,
     },
-  }));
-  return campaigns;
+  };
+  return campaign;
 }
 
 
@@ -54,7 +70,8 @@ export async function getFullCampaigns(provider: AnchorProvider) {
   const program = new Program(idl as AffiliateDapp, provider);
   const metaplex = new Metaplex(provider.connection);
   const campaignAccounts = await program.account.nftCampaign.all();
-
+  console.log("Campaign Accounts:", campaignAccounts);
+  
   const campaigns: Campaign[] = await Promise.all(
     (campaignAccounts as CampaignAccount[]).map(async (campaign) => {
       // Fetch NFT metadata using Metaplex
@@ -65,14 +82,13 @@ export async function getFullCampaigns(provider: AnchorProvider) {
       const uri = nft.uri.startsWith('ipfs://')
                   ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
                   : nft.uri;
-          //nft.uri = uri; // Update the URI to use a public gateway if needed
-      
       return {
         name: campaign.account.name,
         mintPrice: campaign.account.mintPrice.toString(),
         commissionPercentage: campaign.account.commissionPercentage.toString(),
         campaignDetails: campaign.account.campaignDetails,
         nftMint: campaign.account.nftMint.toString(),
+        active: campaign.account.active,
         nftMetadata: {
           uri: uri,
           name: nft.name,
@@ -118,7 +134,8 @@ export async function getFullCampaigns(provider: AnchorProvider) {
  */
 export async function createAffiliateLink(
   provider: AnchorProvider,
-  campaignName: string
+  campaignName: string,
+  nftMint: PublicKey
 ): Promise<web3.TransactionSignature> {
   const program = new Program(idl as AffiliateDapp, provider);
   const programId = new web3.PublicKey(idl.address);
@@ -139,12 +156,12 @@ export async function createAffiliateLink(
   );
 
   return await program.methods
-    .createAffiliateLink(campaignName)
+    .createAffiliateLink(campaignName,nftMint)
     .accounts({
-      //affiliateLink: affiliateLinkPda,
-      // campaign: campaignPda,
+      affiliateLink: affiliateLinkPda,
+      campaign: campaignPda,
       influencer,
-      //systemProgram: web3.SystemProgram.programId,
+      systemProgram: web3.SystemProgram.programId,
     })
     .rpc();
 }
@@ -287,15 +304,12 @@ export async function createNftCampaign(
   const programId = new web3.PublicKey(idl.address);
   const mintPriceBN = new BN(mintPrice.toString());
   const [campaignPda] = await web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("nft_campaign"), Buffer.from(name)],
+    [Buffer.from("nft_campaign"), Buffer.from(name), nftMint.toBuffer()],
     programId
   );
   let projectTokenAccount: PublicKey;
 
   //Check the mint info program Id
-
-  
-
   if (tokenProgram == "spl-token") {
     const accountResp = await CreateTokenAccount(provider, nftMint, company);
     if (!accountResp?.success) {
@@ -312,11 +326,8 @@ export async function createNftCampaign(
     projectTokenAccount = accountResp.tokenAccountAddress;
   }
 
-
- 
-
   const [nftEscrow] = await web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("nft_escrow"), campaignPda.toBuffer()],
+    [Buffer.from("nft_escrow"), Buffer.from(name),nftMint.toBuffer()],
     programId
   );
 
@@ -401,7 +412,7 @@ export async function processAffiliateMint(
   );
 
   return await program.methods
-    .processAffiliateMint(campaignName, influencer)
+    .processAffiliateMint(campaignName, influencer,nftMint)
     .accounts({
       //campaign: campaignPda,
       //affiliateLink: affiliateLinkPda,

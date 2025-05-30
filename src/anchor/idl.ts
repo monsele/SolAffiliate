@@ -86,6 +86,10 @@ export type AffiliateDapp = {
               {
                 "kind": "arg",
                 "path": "campaignName"
+              },
+              {
+                "kind": "arg",
+                "path": "nftMint"
               }
             ]
           }
@@ -104,6 +108,10 @@ export type AffiliateDapp = {
         {
           "name": "campaignName",
           "type": "string"
+        },
+        {
+          "name": "nftMint",
+          "type": "pubkey"
         }
       ]
     },
@@ -124,6 +132,10 @@ export type AffiliateDapp = {
           "name": "company",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "nftMint",
+          "writable": true
         },
         {
           "name": "campaign",
@@ -150,13 +162,13 @@ export type AffiliateDapp = {
               {
                 "kind": "arg",
                 "path": "name"
+              },
+              {
+                "kind": "account",
+                "path": "nftMint"
               }
             ]
           }
-        },
-        {
-          "name": "nftMint",
-          "writable": true
         },
         {
           "name": "projectTokenAccount",
@@ -236,8 +248,12 @@ export type AffiliateDapp = {
                 ]
               },
               {
+                "kind": "arg",
+                "path": "name"
+              },
+              {
                 "kind": "account",
-                "path": "campaign"
+                "path": "nftMint"
               }
             ]
           }
@@ -252,41 +268,8 @@ export type AffiliateDapp = {
                 "path": "nftEscrow"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "tokenProgram"
               },
               {
                 "kind": "account",
@@ -333,8 +316,7 @@ export type AffiliateDapp = {
           }
         },
         {
-          "name": "tokenProgram",
-          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+          "name": "tokenProgram"
         },
         {
           "name": "associatedTokenProgram",
@@ -402,6 +384,10 @@ export type AffiliateDapp = {
               {
                 "kind": "arg",
                 "path": "campaignName"
+              },
+              {
+                "kind": "arg",
+                "path": "nftMintAddress"
               }
             ]
           }
@@ -479,7 +465,13 @@ export type AffiliateDapp = {
               },
               {
                 "kind": "account",
-                "path": "campaign"
+                "path": "campaign.name",
+                "account": "nftCampaign"
+              },
+              {
+                "kind": "account",
+                "path": "campaign.nft_mint",
+                "account": "nftCampaign"
               }
             ]
           }
@@ -710,6 +702,10 @@ export type AffiliateDapp = {
         {
           "name": "influencer",
           "type": "pubkey"
+        },
+        {
+          "name": "nftMintAddress",
+          "type": "pubkey"
         }
       ]
     }
@@ -739,21 +735,6 @@ export type AffiliateDapp = {
         1,
         16,
         250
-      ]
-    }
-  ],
-  "events": [
-    {
-      "name": "listingCreatedEvent",
-      "discriminator": [
-        73,
-        147,
-        169,
-        146,
-        121,
-        205,
-        118,
-        3
       ]
     }
   ],
@@ -794,34 +775,6 @@ export type AffiliateDapp = {
           },
           {
             "name": "earnings",
-            "type": "u64"
-          },
-          {
-            "name": "createdAt",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "listingCreatedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "listing",
-            "type": "pubkey"
-          },
-          {
-            "name": "seller",
-            "type": "pubkey"
-          },
-          {
-            "name": "nftMint",
-            "type": "pubkey"
-          },
-          {
-            "name": "price",
             "type": "u64"
           },
           {

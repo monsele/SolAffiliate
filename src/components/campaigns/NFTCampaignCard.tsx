@@ -65,7 +65,7 @@ const NFTCampaignCard: React.FC<NFTCampaignCardProps> = ({ campaign, featured = 
           {connected ? (
             <Link
              // to={`/campaign/${campaign.id}`}
-            to={`/campaign/${1}`}
+            to={`/campaign/${campaign.nftMint}`}
               className="w-full btn btn-primary flex justify-center items-center"
             >
               View Campaign <ChevronRight size={18} className="ml-1" />

@@ -21,6 +21,8 @@ export interface Campaign {
   commissionPercentage: string;
   campaignDetails: string;
   nftMint: string;
+  active: boolean;
+  //created_at: number,
   nftMetadata: {
     uri?: string;
     name: string;
@@ -40,7 +42,7 @@ export interface CampaignAccount {
       commissionPercentage: BN;
       campaignDetails: string;
       nftMint: PublicKey;
-
+      active: boolean;
       // Add other fields if needed
     };
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
+import {PublicKey } from '@solana/web3.js';
 import { Metaplex, token, walletAdapterIdentity } from '@metaplex-foundation/js';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +8,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
-  ImagePlus,
-  Edit3,
-  Trash2
 } from 'lucide-react';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { toast } from 'sonner';

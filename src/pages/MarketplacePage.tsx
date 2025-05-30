@@ -5,8 +5,8 @@ import NFTCampaignCard from '../components/campaigns/NFTCampaignCard';
 import { mockCampaigns } from '../utils/mockData';
 import { Connection } from '@solana/web3.js';
 import { AnchorWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
-import { AnchorProvider, Program, setProvider, web3 } from '@coral-xyz/anchor';
-import { getCampaigns, getFullCampaigns } from '../utils/instructions';
+import { AnchorProvider, setProvider, web3 } from '@coral-xyz/anchor';
+import { getFullCampaigns } from '../utils/instructions';
 import { Campaign } from '@/types/campaign';
 
 const MarketplacePage: React.FC = () => {
@@ -158,7 +158,7 @@ const MarketplacePage: React.FC = () => {
             .slice(0, 3)
             .map((campaign, index) => (
               <motion.div
-                //key={campaign.id}
+                key={campaign.nftMint}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -193,7 +193,7 @@ const MarketplacePage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {campaigns.map((campaign, index) => (
               <motion.div
-                //key={campaign.id}
+                key={campaign.nftMint}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}

@@ -9,12 +9,13 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-sky-500 flex items-center justify-center">
-                <span className="font-bold text-white text-sm">N</span>
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-800/50 backdrop-blur-sm flex items-center justify-center p-1">
+                <img src="/logo.png" alt="Solfiliate" className="w-full h-full object-contain" />
               </div>
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-sky-500">
-                NexusNFT
+              <span className="text-lg font-bold">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-sky-400">Sol</span>
+                <span className="text-white">filiate</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-gray-400">
@@ -117,7 +118,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-800 text-center text-sm text-gray-400">
-          <p>© 2025 NexusNFT. All rights reserved.</p>
+          <p>© 2025 Solfiliate. All rights reserved.</p>
         </div>
       </div>
     </footer>

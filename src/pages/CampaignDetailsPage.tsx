@@ -13,24 +13,37 @@ import {
 } from 'lucide-react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { mockCampaigns } from '../utils/mockData';
+import { getCampaign } from '@/utils/instructions';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { AnchorWallet, useAnchorWallet } from '@solana/wallet-adapter-react';
+import { AnchorProvider } from '@coral-xyz/anchor';
+import { Campaign } from '@/types/campaign';
 
 const CampaignDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { connected } = useWallet();
-  const [campaign, setCampaign] = useState<any>(null);
+  const [campaign, setCampaign] = useState<Campaign>();
   const [loading, setLoading] = useState(true);
   const [affiliateLink, setAffiliateLink] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [affiliateCreated, setAffiliateCreated] = useState(false);
-
+  const rpc = import.meta.env.VITE_RPC_URL;
+    const connection = new Connection(rpc, "confirmed");
+    const wallet = useAnchorWallet();
+  const provider = new AnchorProvider(
+     connection,
+     wallet as AnchorWallet, // Use anchorWallet if available, otherwise the readOnlyWallet
+     AnchorProvider.defaultOptions()
+   );
   useEffect(() => {
     // Simulate API call to fetch campaign details
     const fetchCampaign = async () => {
       try {
         setLoading(true);
+        console.log('Fetching campaign with ID:', id);
         // In a real app, we would make an API call to fetch the campaign
-        const foundCampaign = mockCampaigns.find(c => c.id === id);
-        
+        const foundCampaign = await getCampaign(provider, id as unknown as PublicKey);
+
         if (foundCampaign) {
           setCampaign(foundCampaign);
         }
@@ -93,7 +106,7 @@ const CampaignDetailsPage: React.FC = () => {
           transition={{ duration: 0.5 }}
         >
           <img 
-            src={campaign.imageUrl} 
+            src={campaign.nftMetadata.image} 
             alt={campaign.name} 
             className="w-full h-64 md:h-80 object-cover"
           />
@@ -115,37 +128,38 @@ const CampaignDetailsPage: React.FC = () => {
                   {campaign.active ? 'Active' : 'Inactive'}
                 </span>
                 <span className="text-sm text-gray-400">
-                  Category: <span className="text-gray-300 capitalize">{campaign.category}</span>
+                  {/* Category: <span className="text-gray-300 capitalize">{campaign.category}</span> */}
+                  Category: <span className="text-gray-300 capitalize">{"Newest"}</span>
                 </span>
               </div>
             </div>
             <span className="text-lg font-bold bg-green-500/20 text-green-400 px-3 py-1 rounded-lg">
-              {campaign.commissionRate}% Commission
+              {campaign.commissionPercentage}% Commission
             </span>
           </div>
 
-          <p className="mt-4 text-gray-300">{campaign.description}</p>
+          <p className="mt-4 text-gray-300">{campaign.campaignDetails}</p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Wallet size={18} className="text-purple-400" />
               <div>
                 <p className="text-xs text-gray-400">Price</p>
-                <p className="font-medium">{campaign.price} SOL</p>
+                <p className="font-medium">{(Number(campaign.mintPrice) /1_000_000_000).toFixed(2)} SOL</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Calendar size={18} className="text-sky-400" />
               <div>
                 <p className="text-xs text-gray-400">Created</p>
-                <p className="font-medium">{new Date(campaign.createdAt).toLocaleDateString()}</p>
+                <p className="font-medium">{new Date().toLocaleDateString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Clock size={18} className="text-orange-400" />
               <div>
                 <p className="text-xs text-gray-400">Ends</p>
-                <p className="font-medium">{new Date(campaign.endDate).toLocaleDateString()}</p>
+                <p className="font-medium">{(new Date()).toLocaleDateString()}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -184,7 +198,8 @@ const CampaignDetailsPage: React.FC = () => {
                   </div>
                   <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
                     <p className="text-sm text-purple-300">
-                      Share this link with your audience. You'll earn {campaign.commissionRate}% ({(campaign.price * campaign.commissionRate / 100).toFixed(2)} SOL) for each successful sale through your link.
+                      {/* Share this link with your audience. You'll earn {campaign.commissionPercentage}% ({(campaign.mintPrice * campaign.commissionPercentage / 100).toFixed(2)} SOL) for each successful sale through your link. */}
+                      Share this link with your audience. You'll earn {campaign.commissionPercentage}% ({(50 / 100).toFixed(2)} SOL) for each successful sale through your link.
                     </p>
                   </div>
                 </div>
@@ -216,7 +231,7 @@ const CampaignDetailsPage: React.FC = () => {
             
             <p className="mb-6">
               This campaign allows you to earn commission by promoting the {campaign.name} NFT to your audience. 
-              When someone purchases the NFT through your unique affiliate link, you'll automatically receive {campaign.commissionRate}% 
+              When someone purchases the NFT through your unique affiliate link, you'll automatically receive {campaign.commissionPercentage}% 
               of the sale price directly to your Solana wallet.
             </p>
             
@@ -234,15 +249,16 @@ const CampaignDetailsPage: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                   <div>
                     <p className="text-xs text-gray-400">NFT Price</p>
-                    <p className="font-medium">{campaign.price} SOL</p>
+                    <p className="font-medium">{campaign.mintPrice} SOL</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Commission Rate</p>
-                    <p className="font-medium">{campaign.commissionRate}%</p>
+                    <p className="font-medium">{campaign.commissionPercentage}%</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">You Earn Per Sale</p>
-                    <p className="font-medium text-green-400">{(campaign.price * campaign.commissionRate / 100).toFixed(2)} SOL</p>
+                    {/* <p className="font-medium text-green-400">{(campaign.price * campaign.commissionRate / 100).toFixed(2)} SOL</p> */}
+                    <p className="font-medium text-green-400">{(50 / 100).toFixed(2)} SOL</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Payout Method</p>
@@ -274,7 +290,8 @@ const CampaignDetailsPage: React.FC = () => {
               <div>
                 <p className="font-medium">CryptoCreator</p>
                 <p className="text-xs text-gray-400">
-                  {campaign.creatorAddress?.slice(0, 6)}...{campaign.creatorAddress?.slice(-4)}
+                  {/* {campaign.creatorAddress?.slice(0, 6)}...{campaign.creatorAddress?.slice(-4)} */}
+                  {"AUNNUEBEBAYYYQYYQ"}
                 </p>
               </div>
             </div>

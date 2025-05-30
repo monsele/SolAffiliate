@@ -80,6 +80,10 @@
               {
                 "kind": "arg",
                 "path": "campaign_name"
+              },
+              {
+                "kind": "arg",
+                "path": "nft_mint"
               }
             ]
           }
@@ -98,6 +102,10 @@
         {
           "name": "campaign_name",
           "type": "string"
+        },
+        {
+          "name": "nft_mint",
+          "type": "pubkey"
         }
       ]
     },
@@ -118,6 +126,10 @@
           "name": "company",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "nft_mint",
+          "writable": true
         },
         {
           "name": "campaign",
@@ -144,13 +156,13 @@
               {
                 "kind": "arg",
                 "path": "name"
+              },
+              {
+                "kind": "account",
+                "path": "nft_mint"
               }
             ]
           }
-        },
-        {
-          "name": "nft_mint",
-          "writable": true
         },
         {
           "name": "project_token_account",
@@ -230,8 +242,12 @@
                 ]
               },
               {
+                "kind": "arg",
+                "path": "name"
+              },
+              {
                 "kind": "account",
-                "path": "campaign"
+                "path": "nft_mint"
               }
             ]
           }
@@ -246,41 +262,8 @@
                 "path": "nft_escrow"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "token_program"
               },
               {
                 "kind": "account",
@@ -327,8 +310,7 @@
           }
         },
         {
-          "name": "token_program",
-          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+          "name": "token_program"
         },
         {
           "name": "associated_token_program",
@@ -396,6 +378,10 @@
               {
                 "kind": "arg",
                 "path": "campaign_name"
+              },
+              {
+                "kind": "arg",
+                "path": "nft_mint_address"
               }
             ]
           }
@@ -473,7 +459,13 @@
               },
               {
                 "kind": "account",
-                "path": "campaign"
+                "path": "campaign.name",
+                "account": "NFTCampaign"
+              },
+              {
+                "kind": "account",
+                "path": "campaign.nft_mint",
+                "account": "NFTCampaign"
               }
             ]
           }
@@ -704,6 +696,10 @@
         {
           "name": "influencer",
           "type": "pubkey"
+        },
+        {
+          "name": "nft_mint_address",
+          "type": "pubkey"
         }
       ]
     }
@@ -733,21 +729,6 @@
         1,
         16,
         250
-      ]
-    }
-  ],
-  "events": [
-    {
-      "name": "ListingCreatedEvent",
-      "discriminator": [
-        73,
-        147,
-        169,
-        146,
-        121,
-        205,
-        118,
-        3
       ]
     }
   ],
@@ -788,34 +769,6 @@
           },
           {
             "name": "earnings",
-            "type": "u64"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ListingCreatedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "listing",
-            "type": "pubkey"
-          },
-          {
-            "name": "seller",
-            "type": "pubkey"
-          },
-          {
-            "name": "nft_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "price",
             "type": "u64"
           },
           {

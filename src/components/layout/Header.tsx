@@ -47,21 +47,24 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <motion.div 
-              className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-sky-500 flex items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="font-bold text-white text-xl">N</span>
-            </motion.div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-sky-500">
-              NexusNFT
-            </span>
-          </Link>
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center space-x-4">
+              <motion.div 
+                className="w-10 h-10 rounded-lg bg-gray-800/50 backdrop-blur-sm flex items-center justify-center p-1.5"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <img src="/logo.png" alt="Solfiliate" className="w-full h-full object-contain" />
+              </motion.div>
+              <span className="text-xl font-bold">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-sky-400">Sol</span>
+                <span className="text-white">filiate</span>
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8 ml-6">
             {navItems.map((item) => (
               <Link
                 key={item.path}
