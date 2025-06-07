@@ -17,7 +17,7 @@ import { mockCampaigns } from '../utils/mockData';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider } from '@coral-xyz/anchor';
 import { Campaign } from '@/types/campaign';
-import { getCampaign } from '@/utils/instructions';
+import { createAffiliateLink, getCampaign } from '@/utils/instructions';
 
 const CampaignDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +45,7 @@ const CampaignDetailsPage: React.FC = () => {
         console.log('Fetching campaign with ID:', id);
         // In a real app, we would make an API call to fetch the campaign
         const foundCampaign = await getCampaign(provider, id as unknown as PublicKey);
-
+        console.log('Fetched campaign:', foundCampaign);
         if (foundCampaign) {
           setCampaign(foundCampaign);
         }
@@ -59,19 +59,38 @@ const CampaignDetailsPage: React.FC = () => {
     fetchCampaign();
   }, [id]);
 
-  const handleGenerateAffiliateLink = async () => {
-    try {
-      setIsGenerating(true);
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setAffiliateLink(`https://nexusnft.io/nft/${id}?ref=7H8ye5unxAi8n9P5mpJT1xq7XszxiEuCv7CUY8FFUqsJ`);
-      setAffiliateCreated(true);
-    } catch (error) {
-      console.error('Error generating affiliate link:', error);
-    } finally {
-      setIsGenerating(false);
+const handleGenerateAffiliateLink = async () => {
+  try {
+    console.log("Generating affiliate link for campaign:", campaign?.name);
+    
+    setIsGenerating(true);
+    
+    if (!campaign || !id || !provider) {
+      throw new Error("Missing required parameters");
     }
-  };
+
+    const nftMint = new PublicKey(id);
+    console.log("Calling createAffiliateLink with NFT Mint:", nftMint.toString());
+    
+    const tx = await createAffiliateLink(
+      provider,
+      campaign.name,
+      nftMint
+    );
+
+    console.log("Affiliate link created with transaction:", tx);
+    let link = `http://localhost:3000/api/actions/affiliate-mint?campaign=${campaign.name}&influencer=${wallet?.publicKey}&nft=${nftMint.toString()}&title=${campaign.name}`
+    // Generate frontend-friendly link after successful blockchain transaction
+    setAffiliateLink(link);
+    setAffiliateCreated(true);
+
+  } catch (error) {
+    console.error('Error generating affiliate link:', error);
+    // You may want to add error handling UI feedback here
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const handleCopyLink = () => {
     if (affiliateLink) {

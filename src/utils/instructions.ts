@@ -70,7 +70,8 @@ export async function getFullCampaigns(provider: AnchorProvider) {
   const program = new Program(idl as AffiliateDapp, provider);
   const metaplex = new Metaplex(provider.connection);
   const campaignAccounts = await program.account.nftCampaign.all();
-  console.log("Campaign Accounts:", campaignAccounts);
+  const links = await program.account.affiliateLink.all();
+  console.log("affiliate links", links);
   
   const campaigns: Campaign[] = await Promise.all(
     (campaignAccounts as CampaignAccount[]).map(async (campaign) => {
@@ -137,33 +138,42 @@ export async function createAffiliateLink(
   campaignName: string,
   nftMint: PublicKey
 ): Promise<web3.TransactionSignature> {
-  const program = new Program(idl as AffiliateDapp, provider);
-  const programId = new web3.PublicKey(idl.address);
-  const influencer = provider?.wallet.publicKey as web3.PublicKey;
-  2
-  const [campaignPda] = await web3.PublicKey.findProgramAddress(
-    [Buffer.from("nft_campaign"), Buffer.from(campaignName)],
-    programId
-  );
-
-  const [affiliateLinkPda] = await web3.PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("affiliate_link"),
-      influencer.toBuffer(),
-      Buffer.from(campaignName),
-    ],
-    programId
-  );
-
-  return await program.methods
-    .createAffiliateLink(campaignName,nftMint)
-    .accounts({
-      affiliateLink: affiliateLinkPda,
-      campaign: campaignPda,
-      influencer,
-      systemProgram: web3.SystemProgram.programId,
-    })
-    .rpc();
+  try {
+    const program = new Program(idl as AffiliateDapp, provider);
+    const programId = new web3.PublicKey(idl.address);
+    const influencer = provider?.wallet.publicKey as web3.PublicKey;
+    
+    // const [campaignPda] = await web3.PublicKey.findProgramAddress(
+    //   [Buffer.from("nft_campaign"), Buffer.from(campaignName)],
+    //   programId
+    // );
+    const [campaignPda] = await web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("nft_campaign"), Buffer.from(campaignName), nftMint.toBuffer()],
+      programId
+    );
+  
+    const [affiliateLinkPda] = await web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("affiliate_link"),
+        influencer.toBuffer(),
+        Buffer.from(campaignName),
+      ],
+      programId
+    );
+  
+    return await program.methods
+      .createAffiliateLink(campaignName,nftMint)
+      .accounts({
+        affiliateLink: affiliateLinkPda,
+        campaign: campaignPda,
+        influencer,
+        systemProgram: web3.SystemProgram.programId,
+      })
+      .rpc();
+  } catch (error) {
+    console.log(error, "Error creating affiliate link");
+    
+  }
 }
 
 async function CreateToken2022Account(provider: AnchorProvider, mint: PublicKey) {
