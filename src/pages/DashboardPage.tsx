@@ -13,13 +13,30 @@ import {
   Link as LinkIcon,
   Plus,
 } from 'lucide-react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { AnchorWallet, useAnchorWallet, useWallet } from '@solana/wallet-adapter-react';
 import { mockCampaigns, mockAffiliateLinks } from '../utils/mockData';
-
+import { AnchorProvider, setProvider, web3 } from '@coral-xyz/anchor';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { processAffiliateMint } from '@/utils/instructions';
 const DashboardPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { publicKey } = useWallet();
+  const rpc = import.meta.env.VITE_RPC_URL;
+  const connection = new Connection(rpc, "confirmed");
+  const wallet = useAnchorWallet();
+  const readOnlyWallet: AnchorWallet = {
+      publicKey: wallet?.publicKey || web3.Keypair.generate().publicKey, // Use connected wallet's public key or a dummy one
+      signTransaction: async <T extends web3.Transaction | web3.VersionedTransaction>(tx: T): Promise<T> => tx, // Dummy sign function with correct generic
+      signAllTransactions: async <T extends web3.Transaction | web3.VersionedTransaction>(txs: T[]): Promise<T[]> => txs, // Dummy sign function with correct generic
+    };
+   const provider = new AnchorProvider(
+      connection,
+      wallet || readOnlyWallet, // Use anchorWallet if available, otherwise the readOnlyWallet
+      AnchorProvider.defaultOptions()
+    );
+    // Set the global provider (optional, but common for Anchor)
+    setProvider(provider);
   
   // Get tab from URL or default to 'overview'
   const queryParams = new URLSearchParams(location.search);
@@ -30,6 +47,12 @@ const DashboardPage: React.FC = () => {
     setActiveTab(tab);
     navigate(`/dashboard?tab=${tab}`);
   };
+  const handleProcessAffiliateTest = async () => {
+    console.log("Processing affiliate mint...");
+    await processAffiliateMint(provider,"The Future", new PublicKey("BpM1P9PNwD2Yf9TcSaxKYiLpkkSwvShJHjkaaHUar9Mt"),
+    new PublicKey("AfYA7wJDvN8ixxVWyt2eHVgwzHAfB1zLk33DajoVa8mf"),
+    new PublicKey("3C4wm7dDQ35FRCsB9ifTUXbV2VXNw51LVNqBX4n1r8zk"))
+};
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
@@ -269,6 +292,11 @@ const DashboardPage: React.FC = () => {
                       </button>
                       <button className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
                         View Analytics
+                      </button>
+                       <button 
+                       onClick={handleProcessAffiliateTest}
+                       className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
+                       Test ProcessAffiliate
                       </button>
                     </div>
                   </div>
