@@ -245,7 +245,7 @@ async function CreateTokenAccount2(provider: AnchorProvider, mint: PublicKey, us
     mint,
     userKey,
     false,
-    TOKEN_PROGRAM_ID,
+    TOKEN_2022_PROGRAM_ID,
   );
     console.log(`Checking if associated token account exists: ${associatedTokenAccount.toString()}`);
     const accRes = await getAccount(provider.connection, associatedTokenAccount, 'confirmed', TOKEN_PROGRAM_ID);
@@ -432,6 +432,7 @@ export async function createNftCampaign(
 /**
  * processAffiliateMint: handles affiliate mint flow, transferring NFTs and distributing commission.
  */
+
 export async function processAffiliateMint(
   provider: AnchorProvider,
   campaignName: string,
@@ -457,13 +458,9 @@ export async function processAffiliateMint(
     programId
   );
 
-  //   const [nftEscrow] = await web3.PublicKey.findProgramAddressSync(
-  //   [Buffer.from("nft_escrow"), Buffer.from(name),nftMint.toBuffer()],
-  //   programId
-  // );
   const nftEscrowPda = (
     await web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("nft_escrow"), Buffer.from(campaignName),nftMint.toBuffer()],
+      [Buffer.from("nft_escrow"), Buffer.from(campaignName), nftMint.toBuffer()],
       programId
     )
   )[0];
@@ -473,30 +470,18 @@ export async function processAffiliateMint(
     buyer
   );
 
-  const ownerTokenAccount = await getAssociatedTokenAddressSync(
-    nftMint,
-    owner,
-    
-  );
-    await CreateTokenAccount2(provider, nftMint, owner);
-
-  // const escrowPdaNftTokenAccount = await getAssociatedTokenAddressSync(
-  //   nftMint,
-  //   nftEscrowPda,
-  //   true, // allowOwnerOffCurve = true for PDA
-  // );
     const escrowPdaNftTokenAccount = await getAssociatedTokenAddressSync(
     nftMint,
     nftEscrowPda,
     true, // allowOwnerOffCurve = true for PDA
     TOKEN_PROGRAM_ID
   );
-
-  const [marketplaceAuthority] = await web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("marketplace_authority")],
-    programId
-  );
   
+   let [marketplaceAuthority] = PublicKey.findProgramAddressSync(
+      [Buffer.from("marketplace_authority")],
+      program.programId
+    );
+
   return await program.methods
     .processAffiliateMint(campaignName, influencer,nftMint)
     .accounts({
@@ -508,7 +493,6 @@ export async function processAffiliateMint(
       nftMint,
       nftEscrow: nftEscrowPda,
       buyerTokenAccount,
-      ownerTokenAccount,
       escrowPdaNftTokenAccount,
       marketplaceAuthority,
       tokenProgram: TOKEN_PROGRAM_ID,
