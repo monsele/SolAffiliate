@@ -140,7 +140,7 @@ const CreateCampaignPage: React.FC = () => {
       AnchorProvider.defaultOptions()
     );
     console.log(provider);
-
+   toast.success('Creating campaign...');
     const result =await createNftCampaign(
       provider,
       formData.name,
@@ -151,8 +151,7 @@ const CreateCampaignPage: React.FC = () => {
       selectedNFT.tokenProgram,
     );
 
-    // In a real application, we would send the form data to the Solana blockchain
-    // For now, just navigate to the dashboard
+    
     console.log(selectedNFT);
     console.log('Form Data:', formData);
     console.log('Transaction Signature:', result);

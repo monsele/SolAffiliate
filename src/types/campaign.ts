@@ -22,6 +22,8 @@ export interface Campaign {
   campaignDetails: string;
   nftMint: string;
   active: boolean;
+  company: string;
+  affiliatesCount: number;
   //created_at: number,
   nftMetadata: {
     uri?: string;
@@ -43,6 +45,8 @@ export interface CampaignAccount {
       campaignDetails: string;
       nftMint: PublicKey;
       active: boolean;
+      company: PublicKey;
+      affiliatesCount: BN;
       // Add other fields if needed
     };
   }

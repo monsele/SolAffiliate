@@ -79,7 +79,7 @@ const handleGenerateAffiliateLink = async () => {
     );
 
     console.log("Affiliate link created with transaction:", tx);
-    let link = `http://localhost:3000/api/actions/affiliate-mint?campaign=${campaign.name}&influencer=${wallet?.publicKey}&nft=${nftMint.toString()}&title=${campaign.name}`
+    let link = `${import.meta.env.VITE_AFF_URL}/api/actions/affiliate-mint?campaign=${campaign.name}&influencer=${wallet?.publicKey}&nft=${nftMint.toString()}&owner=${campaign.company}&img=${campaign.nftMetadata.image}`;
     // Generate frontend-friendly link after successful blockchain transaction
     setAffiliateLink(link);
     setAffiliateCreated(true);

@@ -15,6 +15,7 @@ import AffiliateLinksPage from './pages/AffiliateLinksPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 import CreateNFTPage from './pages/CreateNFTPage';
+import ComingSoonPage from './pages/ComingSoonPage';
 
 function App() {
   const { connected } = useWallet();
@@ -25,7 +26,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/campaign/:id" element={<CampaignDetailsPage />} />
-        
+         <Route path="/coming-soon" element={<ComingSoonPage />} />
         {/* Protected routes */}
         {connected && (
           <>

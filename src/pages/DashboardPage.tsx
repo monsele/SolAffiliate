@@ -47,12 +47,12 @@ const DashboardPage: React.FC = () => {
     setActiveTab(tab);
     navigate(`/dashboard?tab=${tab}`);
   };
-  const handleProcessAffiliateTest = async () => {
-    console.log("Processing affiliate mint...");
-    await processAffiliateMint(provider,"The Future", new PublicKey("BpM1P9PNwD2Yf9TcSaxKYiLpkkSwvShJHjkaaHUar9Mt"),
-    new PublicKey("AfYA7wJDvN8ixxVWyt2eHVgwzHAfB1zLk33DajoVa8mf"),
-    new PublicKey("3C4wm7dDQ35FRCsB9ifTUXbV2VXNw51LVNqBX4n1r8zk"))
-};
+//   const handleProcessAffiliateTest = async () => {
+//     console.log("Processing affiliate mint...");
+//     await processAffiliateMint(provider,"The Future", new PublicKey("BpM1P9PNwD2Yf9TcSaxKYiLpkkSwvShJHjkaaHUar9Mt"),
+//     new PublicKey("AfYA7wJDvN8ixxVWyt2eHVgwzHAfB1zLk33DajoVa8mf"),
+//     new PublicKey("3C4wm7dDQ35FRCsB9ifTUXbV2VXNw51LVNqBX4n1r8zk"))
+// };
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
@@ -64,9 +64,9 @@ const DashboardPage: React.FC = () => {
   // Mock data for dashboard stats
   const stats = [
     { id: 1, label: 'Active Campaigns', value: 3, icon: <Megaphone size={20} className="text-purple-400" />, change: '+2', period: 'from last week' },
-    { id: 2, label: 'Total Earnings', value: '45.8 SOL', icon: <Wallet size={20} className="text-green-400" />, change: '+12.4 SOL', period: 'this month' },
+   // { id: 2, label: 'Total Earnings', value: '45.8 SOL', icon: <Wallet size={20} className="text-green-400" />, change: '...', period: 'this month' },
     { id: 3, label: 'Affiliate Links', value: 12, icon: <LinkIcon size={20} className="text-sky-400" />, change: '+5', period: 'from last month' },
-    { id: 4, label: 'Conversion Rate', value: '8.2%', icon: <TrendingUp size={20} className="text-orange-400" />, change: '+1.4%', period: 'from last month' },
+    // { id: 4, label: 'Conversion Rate', value: '8.2%', icon: <TrendingUp size={20} className="text-orange-400" />, change: '+1.4%', period: 'from last month' },
   ];
 
   return (
@@ -166,8 +166,8 @@ const DashboardPage: React.FC = () => {
                 </button>
               </div>
               
-              <div className="space-y-4">
-                {/* Activity items */}
+              {/* <div className="space-y-4">
+               
                 {[
                   {
                     id: 1,
@@ -223,7 +223,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
           </motion.div>
         )}
@@ -290,14 +290,10 @@ const DashboardPage: React.FC = () => {
                       <button className="btn-primary btn-sm rounded-md px-4 py-2 text-sm">
                         Edit Campaign
                       </button>
-                      <button className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
+                      {/* <button className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
                         View Analytics
-                      </button>
-                       <button 
-                       onClick={handleProcessAffiliateTest}
-                       className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
-                       Test ProcessAffiliate
-                      </button>
+                      </button> */}
+                       
                     </div>
                   </div>
                 </motion.div>
@@ -305,7 +301,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
         )}
-
+{/* 
         {activeTab === 'earnings' && (
           <motion.div 
             initial={{ opacity: 0 }}
@@ -378,9 +374,9 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
           </motion.div>
-        )}
+        )} */}
 
-        {activeTab === 'analytics' && (
+        {/* {activeTab === 'analytics' && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -445,7 +441,7 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
           </motion.div>
-        )}
+        )} */}
       </div>
     </div>
   );
