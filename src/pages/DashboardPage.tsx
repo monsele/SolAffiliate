@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -14,10 +14,12 @@ import {
   Plus,
 } from 'lucide-react';
 import { AnchorWallet, useAnchorWallet, useWallet } from '@solana/wallet-adapter-react';
-import { mockCampaigns, mockAffiliateLinks } from '../utils/mockData';
+import { mockCampaigns } from '../utils/mockData';
 import { AnchorProvider, setProvider, web3 } from '@coral-xyz/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { processAffiliateMint } from '@/utils/instructions';
+import { getUserCampaigns } from '@/utils/instructions';
+import { Campaign } from '@/types/campaign';
+
 const DashboardPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,6 +27,9 @@ const DashboardPage: React.FC = () => {
   const rpc = import.meta.env.VITE_RPC_URL;
   const connection = new Connection(rpc, "confirmed");
   const wallet = useAnchorWallet();
+  const [userCampaigns, setUserCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const readOnlyWallet: AnchorWallet = {
       publicKey: wallet?.publicKey || web3.Keypair.generate().publicKey, // Use connected wallet's public key or a dummy one
       signTransaction: async <T extends web3.Transaction | web3.VersionedTransaction>(tx: T): Promise<T> => tx, // Dummy sign function with correct generic
@@ -68,6 +73,26 @@ const DashboardPage: React.FC = () => {
     { id: 3, label: 'Affiliate Links', value: 12, icon: <LinkIcon size={20} className="text-sky-400" />, change: '+5', period: 'from last month' },
     // { id: 4, label: 'Conversion Rate', value: '8.2%', icon: <TrendingUp size={20} className="text-orange-400" />, change: '+1.4%', period: 'from last month' },
   ];
+
+  useEffect(() => {
+    const fetchUserCampaigns = async () => {
+      if (provider && publicKey) {
+        setIsLoading(true);
+        try {
+          const campaigns = await getUserCampaigns(provider);
+          setUserCampaigns(campaigns);
+          console.log('User campaigns:', campaigns);
+          
+        } catch (error) {
+          console.error('Error fetching user campaigns:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchUserCampaigns();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -247,57 +272,72 @@ const DashboardPage: React.FC = () => {
 
             {/* Campaign list */}
             <div className="space-y-4">
-              {mockCampaigns.slice(0, 3).map((campaign, index) => (
-                <motion.div
-                  key={campaign.id}
-                  className="card flex flex-col md:flex-row gap-4 overflow-hidden"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <div className="w-full md:w-48 h-32 md:h-auto flex-shrink-0">
-                    <img 
-                      src={campaign.imageUrl} 
-                      alt={campaign.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                  <div className="flex-grow flex flex-col">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-bold">{campaign.name}</h3>
-                      <span className={`text-sm px-2 py-1 rounded-full ${
-                        campaign.active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {campaign.active ? 'Active' : 'Inactive'}
-                      </span>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p>Loading campaigns...</p>
+                </div>
+              ) : userCampaigns.length > 0 ? (
+                userCampaigns.map((campaign, index) => (
+                  <motion.div
+                    key={campaign.nftMint}
+                    className="card flex flex-col md:flex-row gap-4 overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <div className="w-full md:w-48 h-32 md:h-auto flex-shrink-0">
+                      <img 
+                        src={campaign.nftMetadata.image} 
+                        alt={campaign.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                     </div>
-                    <p className="text-sm text-gray-400 mb-3">{campaign.description}</p>
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-400">Commission</p>
-                        <p className="font-medium">{campaign.commissionRate}%</p>
+                    <div className="flex-grow flex flex-col">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-bold">{campaign.name}</h3>
+                        <span className={`text-sm px-2 py-1 rounded-full ${
+                          campaign.active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {campaign.active ? 'Active' : 'Inactive'}
+                        </span>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Price</p>
-                        <p className="font-medium">{campaign.price} SOL</p>
+                      <p className="text-sm text-gray-400 mb-3">{campaign.campaignDetails}</p>
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <p className="text-xs text-gray-400">Commission</p>
+                          <p className="font-medium">{campaign.commissionPercentage}%</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Price</p>
+                          <p className="font-medium">{campaign.mintPrice} SOL</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Affiliates</p>
+                          <p className="font-medium">{campaign.affiliatesCount}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-400">Affiliates</p>
-                        <p className="font-medium">{Math.floor(Math.random() * 10) + 1}</p>
+                      <div className="mt-auto flex gap-2">
+                        <button 
+                          onClick={() => navigate(`/campaign/${campaign.nftMint}`)}
+                          className="btn-primary btn-sm rounded-md px-4 py-2 text-sm"
+                        >
+                          View Campaign
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-auto flex gap-2">
-                      <button className="btn-primary btn-sm rounded-md px-4 py-2 text-sm">
-                        Edit Campaign
-                      </button>
-                      {/* <button className="btn-ghost btn-sm rounded-md px-4 py-2 text-sm">
-                        View Analytics
-                      </button> */}
-                       
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">No campaigns found</p>
+                  <button 
+                    onClick={() => navigate('/create-campaign')}
+                    className="btn btn-primary mt-4"
+                  >
+                    Create Your First Campaign
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -405,7 +445,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{(Math.random() * 10).toFixed(1)} SOL</p>
+                        <p className="font-medium">{(Math.random() * 10).toFixed(1}} SOL</p>
                         <p className="text-xs text-green-400">+{(Math.random() * 5).toFixed(1)}%</p>
                       </div>
                     </div>

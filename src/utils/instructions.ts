@@ -101,6 +101,8 @@ export async function getFullCampaigns(provider: AnchorProvider) {
       const uri = nft.uri.startsWith('ipfs://')
         ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
         : nft.uri;
+         let metaData = await fetch(uri || '');
+        let metaDataJson = await metaData.json();
       return {
         name: campaign.account.name,
         mintPrice: campaign.account.mintPrice.toString(),
@@ -114,7 +116,7 @@ export async function getFullCampaigns(provider: AnchorProvider) {
           uri: uri,
           name: nft.name,
           description: nft.json?.description || '',
-          image: nft.json?.image || '',
+          image: metaDataJson.image || '',
           attributes: Array.isArray(nft.json?.attributes)
             ? nft.json.attributes
               .filter(
@@ -163,6 +165,8 @@ export async function getUserCampaigns(provider: AnchorProvider, userPublicKey?:
       const uri = nft.uri.startsWith('ipfs://')
         ? nft.uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
         : nft.uri;
+        let metaData = await fetch(uri || '');
+      let metaDataJson = await metaData.json();
       return {
         name: campaign.account.name,
         mintPrice: campaign.account.mintPrice.toString(),
@@ -176,7 +180,7 @@ export async function getUserCampaigns(provider: AnchorProvider, userPublicKey?:
           uri: uri,
           name: nft.name,
           description: nft.json?.description || '',
-          image: nft.json?.image || '',
+          image: metaDataJson.image || '',
           attributes: Array.isArray(nft.json?.attributes)
             ? nft.json.attributes
               .filter(
@@ -196,7 +200,7 @@ export async function getUserCampaigns(provider: AnchorProvider, userPublicKey?:
       };
     })
   );
-  console.log("Campaigns fetched:", campaigns);
+  //console.log("Campaigns fetched:", campaigns);
   return campaigns;
 }
 
